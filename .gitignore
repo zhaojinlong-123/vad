@@ -1,0 +1,10 @@
+# macOS
+.DS_Store
+*/.DS_Store
+
+# 缓存文件
+__pycache__
+*/__pycache__
+
+# 数据集
+competition_dataset

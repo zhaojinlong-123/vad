@@ -8,3 +8,6 @@ __pycache__
 
 # 数据集
 competition_dataset
+
+# PyCharm
+.idea

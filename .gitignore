@@ -5,6 +5,7 @@
 # 缓存文件
 __pycache__
 */__pycache__
+lightning_logs
 
 # 数据集
 competition_dataset

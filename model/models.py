@@ -80,7 +80,8 @@ class CRNN(nn.Module):
 
 if __name__ == "__main__":
     model = CRNN(64, 4)
-    x = torch.rand(4, 100, 64)
+    #x = torch.rand(4, 100, 64)
+    x = torch.rand(1,10,64)
     o = model(x)
     # (bs, time, output_dim)
     print(o.shape)

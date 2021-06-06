@@ -123,8 +123,8 @@ def load_data(data_path, clip_length):
         head += clip_size
 
     return data
-
-
+    
+ 
 if __name__ == "__main__":
     dataset = WavDataset("../competition_dataset/train", 1, 10, False)
     dataset_len = dataset.__len__()
@@ -138,3 +138,4 @@ if __name__ == "__main__":
     for i in range(dataset_len):
         item = dataset.__getitem__(i)
     '''
+ 

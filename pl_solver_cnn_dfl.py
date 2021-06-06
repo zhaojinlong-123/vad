@@ -4,7 +4,7 @@ import pytorch_lightning as pl
 from data_loader.wav_data import WavDataset
 from config import Config
 from torch.utils.data import DataLoader
-from einops import rearrange
+from einops import rearrange, repeat
 from pytorch_lightning.callbacks import ModelCheckpoint
 import os
 from pytorch_lightning.callbacks import LearningRateMonitor
@@ -25,7 +25,7 @@ class LitModel(pl.LightningModule):
         self.lr = cfg.train_cfg.lr
         self.save_hyperparameters()
         self.loss = torch.nn.CrossEntropyLoss()
-        self.model = CRNN(64, 4)
+        self.model = CRNN(160, 4)
         self.f1 = pl.metrics.F1(num_classes=2)
         self.acc = pl.metrics.Accuracy()
         self.pre = pl.metrics.Precision()
@@ -53,10 +53,13 @@ class LitModel(pl.LightningModule):
         return [opt], schedulers
 
     def predict_batch(self, batch):
-        x = batch['features']
-        y = batch['labels']
-        x = rearrange(x, "bs bucketsize cliplength dim -> (bs bucketsize) cliplength dim")
-        y = rearrange(y, "bs bucketsize cliplength-> (bs bucketsize) cliplength")
+        #x = batch['features']
+        #y = batch['labels']
+        x, y = batch
+        x = repeat(x, "bs dim -> bs cliplength dim",cliplength=4)
+        y = repeat(y, "bs-> bs cliplength",cliplength=4)
+        #x = rearrange(x, "bs bucketsize cliplength dim -> (bs bucketsize) cliplength dim")
+        #y = rearrange(y, "bs bucketsize cliplength-> (bs bucketsize) cliplength")
         y_predict = self(x)
         return x, y_predict, y
 
@@ -142,7 +145,7 @@ class LitModel(pl.LightningModule):
 if __name__ == "__main__":
     cfg = Config()
     # n_gpus = 2
-    n_gpus = 4
+    n_gpus = "5"
     # model = LitModel(lr=5e-4)
     # debug = True
     debug = False

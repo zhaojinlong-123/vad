@@ -3,11 +3,11 @@ import os
 
 class DataConfig:
     def __init__(self):
-        self.train_dataset_path = "competition_dataset/train.csv"
-        self.val_dataset_path = "competition_dataset/test.csv"
-        self.test_dataset_path = "competition_dataset/test.csv"
-        self.bs = 100
-        self.clip_length = 100
+        self.train_dataset_path = "competition_dataset/train"
+        self.val_dataset_path = "competition_dataset/val"
+        self.test_dataset_path = "competition_dataset/test"
+        self.bs = 10
+        self.clip_length = 10
         self.NON_SPEECH_LABEL = 3
 
 

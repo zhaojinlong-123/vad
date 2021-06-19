@@ -104,7 +104,30 @@ class LitModel(pl.LightningModule):
         self.log("recall", self.recall)
 
     def test_step(self, batch, batch_idx):
-        pass
+        x, y_p, y = self.predict_batch(batch)
+        _ = self.cal_loss_and_log_info(y_p, y, val=True)
+
+        non_speech_label = self.cfg.data_cfg.NON_SPEECH_LABEL
+        y_b = (~(y == non_speech_label)).long()
+        y_b = rearrange(y_b, "bs time-> (bs time)")
+        y_p = torch.softmax(y_p, dim=2)
+        prob_non_speech = y_p[:, :, non_speech_label]+0.034
+        prob_speech = 1 - prob_non_speech
+        y_pb = torch.stack([prob_non_speech, prob_speech], dim=2)
+
+        y_pb = rearrange(y_pb, "bs time dim -> (bs time) dim")
+        print("pre:",y_pb)
+        print("truth:",y_b)
+        # self.val_metrics(y_pb, y_b)
+        self.f1(y_pb, y_b)
+        self.acc(y_pb, y_b)
+        self.pre(y_pb, y_b)
+        self.recall(y_pb, y_b)
+        self.log("f1", self.f1)
+        self.log("acc", self.acc)
+        self.log("precision", self.pre)
+        self.log("recall", self.recall)
+        print(self.f1)
 
     def train_dataloader(self):
         train_dataset = WavDataset(self.cfg.data_cfg.train_dataset_path,
@@ -146,17 +169,17 @@ class LitModel(pl.LightningModule):
 if __name__ == "__main__":
     cfg = Config()
     # n_gpus = 2
-    n_gpus = "5"
+    n_gpus = "6"
     # model = LitModel(lr=5e-4)
     # debug = True
     debug = False
     # test = True
-    test = False
+    test = True
 
     description = "original"
     model = LitModel(cfg)
-    # checkpoint = "./saved_models/dfl_speech_dfl_noise_None_0.0002/epoch=0149-pesq=3.446-stoi=0.940.ckpt"
-    checkpoint = None
+    checkpoint = "./saved_models/original_5e-05/epoch=0040-val_loss=1.049-f1=0.557-acc=0.557-precision=0.557-recall=0.557.ckpt"
+    # checkpoint = None
     if checkpoint is not None:
         checkpoint_path = os.path.dirname(checkpoint)
         model = model.load_from_checkpoint(checkpoint, cfg=cfg, strict=False)

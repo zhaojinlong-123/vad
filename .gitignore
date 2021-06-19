@@ -6,6 +6,8 @@
 __pycache__
 */__pycache__
 lightning_logs
+tb_results
+saved_models
 
 # 数据集
 competition_dataset

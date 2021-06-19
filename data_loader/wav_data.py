@@ -12,7 +12,7 @@ class WavDataset(Dataset):
     def __init__(self, dataset_path, bs, clip_length, val):
         super().__init__()
         self.dataset_path = dataset_path
-        self.bs = bs  # bs 是什么？
+        self.bs = bs  # batch size
         self.clip_length = clip_length  # 单位：毫秒
         self.val = val
 
@@ -42,7 +42,7 @@ class WavDataset(Dataset):
         if self.data_cache.__len__() > list(self.labels.values())[0].__len__():
             self.data_cache = self.data_cache[:list(self.labels.values())[0].__len__()]
 
-    def __getitem__(self, index):
+    def __getoneitem__(self, index):
         # 如果 index 不在缓存范围内，则需要刷新缓存
         if not (self.index_cache[0] <= index < self.index_cache[1]):
             head = 0
@@ -67,8 +67,24 @@ class WavDataset(Dataset):
         label = self.labels[self.id_cache][data_idx]
         return data, label
 
+    def __getitem__(self, index):
+        idx_start = index * self.bs
+        idx_end = (index + 1) * self.bs
+
+        datas = []
+        labels = []
+
+        for idx in range(idx_start, idx_end):
+            data_tmp, label_tmp = self.__getoneitem__(idx)
+            datas.append(data_tmp)
+            labels.append(label_tmp)
+
+        return torch.stack(datas, 0), torch.tensor(labels)
+
+
     def __len__(self):
-        return self.len
+        t = self.len // self.bs
+        return t
 
 
 def load_labels(labels_path, clip_length):
@@ -126,11 +142,11 @@ def load_data(data_path, clip_length):
     
  
 if __name__ == "__main__":
-    dataset = WavDataset("../competition_dataset/train", 1, 10, False)
+    dataset = WavDataset("../competition_dataset/train", 10, 10, False)
     dataset_len = dataset.__len__()
     print("dataset size:", dataset_len)
 
-    for i in range(5):
+    for i in range(1):
         print(dataset.__getitem__(i))
 
     # 测试读取整个数据集，需要花几分钟时间

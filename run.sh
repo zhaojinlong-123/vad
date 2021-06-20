@@ -1,1 +1,1 @@
-nohup python pl_solver_cnn_dfl.py > output.log 2>&1 &
+nohup python pl_solver_cnn_dfl.py > output_sgd.log 2>&1 &

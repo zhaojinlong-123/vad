@@ -26,7 +26,8 @@ class LitModel(pl.LightningModule):
         self.lr = cfg.train_cfg.lr
         self.save_hyperparameters()
         self.loss = torch.nn.CrossEntropyLoss()
-        self.model = CRNN(320, 4)
+        #self.loss = 
+        self.model = CRNN(64, 4)
         self.f1 = pl.metrics.F1(num_classes=2)
         self.acc = pl.metrics.Accuracy()
         self.pre = pl.metrics.Precision()
@@ -39,7 +40,7 @@ class LitModel(pl.LightningModule):
 
     def configure_optimizers(self):
         opt = torch.optim.AdamW(self.model.parameters(), lr=self.lr, betas=(0.9, 0.999))
-        # opt = torch.optim.SGD(self.model.parameters(), lr=self.lr)
+        #opt = torch.optim.SGD(self.model.parameters(), lr=self.lr, momentum = 0.9)
         monitor = 'val_loss'
         scheduler = ReduceLROnPlateau(opt, "min", factor=0.8, min_lr=self.lr/10, patience=10)
         schedulers = [
@@ -86,13 +87,19 @@ class LitModel(pl.LightningModule):
         non_speech_label = self.cfg.data_cfg.NON_SPEECH_LABEL
         y_b = (~(y == non_speech_label)).long()
         y_b = rearrange(y_b, "bs time-> (bs time)")
-
         y_p = torch.softmax(y_p, dim=2)
-        prob_non_speech = y_p[:, :, non_speech_label]
+
+        predict_result = torch.argmax(y_p, dim=2)
+        y_pb = (predict_result != 3).int()
+        y_pb = torch.squeeze(y_pb, dim=0)
+        '''
+        prob_non_speech = y_p[:, :, non_speech_label]#+0.115
         prob_speech = 1 - prob_non_speech
         y_pb = torch.stack([prob_non_speech, prob_speech], dim=2)
-
         y_pb = rearrange(y_pb, "bs time dim -> (bs time) dim")
+'''
+        print("pre:", y_pb)
+        print("truth:", y_b)
         # self.val_metrics(y_pb, y_b)
         self.f1(y_pb, y_b)
         self.acc(y_pb, y_b)
@@ -146,7 +153,7 @@ class LitModel(pl.LightningModule):
 if __name__ == "__main__":
     cfg = Config()
     # n_gpus = 2
-    n_gpus = "5"
+    n_gpus = 1 #"5"
     # model = LitModel(lr=5e-4)
     # debug = True
     debug = False
@@ -163,7 +170,7 @@ if __name__ == "__main__":
     version = F"{description}_{cfg.train_cfg.lr}"
 
     checkpoint_callback = ModelCheckpoint(save_top_k=-1, mode="min", monitor="val_loss", verbose=True, save_last=True,
-                                           dirpath=F"saved_models/{version}",
+                                           dirpath=F"saved_models/{version}_sgd",
                                           filename="{epoch:04d}-{val_loss:.3f}-{f1:.3f}-{acc:.3f}-{precision:.3f}-{recall:.3f}")                                  
     lr_logger = LearningRateMonitor(logging_interval='epoch')
     if debug:

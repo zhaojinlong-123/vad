@@ -34,7 +34,7 @@ class WavDataset(Dataset):
             data = load_data(datafile_path, clip_length)
             self.data_list.append(data[:, 0:labels_cnt])
 
-        self.labels = torch.cat(self.labels_list)
+        self.labels = torch.cat(self.labels_list).long()
         self.data = torch.cat(self.data_list, dim=1)
 
     def __len__(self):
@@ -102,7 +102,7 @@ def load_data(data_path, clip_length, feature_type="MFCC"):
             "hop_length": clip_size,
             "n_mels": 64
         }
-        mfcc = torchaudio.transforms.MFCC(sample_rate=sample_rate, n_mfcc=40, melkwargs=melkwargs)
+        mfcc = torchaudio.transforms.MFCC(sample_rate=sample_rate, n_mfcc=64, melkwargs=melkwargs)
         data = mfcc.forward(waveform)
         data = torch.squeeze(data, dim=0)
 
@@ -110,12 +110,13 @@ def load_data(data_path, clip_length, feature_type="MFCC"):
 
 
 if __name__ == "__main__":
-    dataset = WavDataset("../competition_dataset/train", 1, 10, False)
+    dataset = WavDataset("../competition_dataset/train", 2, 10, False)
     dataset_len = dataset.__len__()
     print("dataset size:", dataset_len)
 
     for i in range(5):
         print(dataset.__getitem__(i))
+        print(dataset.__getitem__(i)[0].shape)
 
     # 测试读取整个数据集，需要花几分钟时间
     '''

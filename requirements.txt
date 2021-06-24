@@ -1,2 +1,4 @@
 pytorch-lightning
 einops
+pandas
+scikit-learn

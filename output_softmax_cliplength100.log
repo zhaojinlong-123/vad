@@ -1,0 +1,20 @@
+GPU available: True, used: True
+TPU available: False, using: 0 TPU cores
+Using native 16bit precision.
+initializing ddp: GLOBAL_RANK: 0, MEMBER: 1/1
+Traceback (most recent call last):
+  File "pl_solver_cnn_dfl.py", line 204, in <module>
+    trainer.fit(model)
+  File "/home/zjl/anaconda3/envs/vad/lib/python3.8/site-packages/pytorch_lightning/trainer/trainer.py", line 458, in fit
+    self._run(model)
+  File "/home/zjl/anaconda3/envs/vad/lib/python3.8/site-packages/pytorch_lightning/trainer/trainer.py", line 713, in _run
+    self.call_setup_hook(model)  # allow user to setup lightning_module in accelerator environment
+  File "/home/zjl/anaconda3/envs/vad/lib/python3.8/site-packages/pytorch_lightning/trainer/trainer.py", line 1156, in call_setup_hook
+    self.accelerator.barrier("pre_setup")
+  File "/home/zjl/anaconda3/envs/vad/lib/python3.8/site-packages/pytorch_lightning/accelerators/accelerator.py", line 427, in barrier
+    self.training_type_plugin.barrier(name=name)
+  File "/home/zjl/anaconda3/envs/vad/lib/python3.8/site-packages/pytorch_lightning/plugins/training_type/ddp.py", line 286, in barrier
+    torch_distrib.barrier()
+  File "/home/zjl/anaconda3/envs/vad/lib/python3.8/site-packages/torch/distributed/distributed_c10d.py", line 2420, in barrier
+    work = default_pg.barrier(opts=opts)
+RuntimeError: CUDA error: out of memory

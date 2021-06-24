@@ -1,4 +1,5 @@
 from model.models import CRNN
+#from model.dnn import DNN
 import torch
 import pytorch_lightning as pl
 from data_loader.wav_data import WavDataset
@@ -33,6 +34,7 @@ class LitModel(pl.LightningModule):
         self.pre = pl.metrics.Precision()
         self.recall = pl.metrics.Recall()
         # self.test_metrics = torchmetrics.MetricCollection([Accuracy(), Precision(), Recall()])
+        #self.f1_loss = pl.metrics.F1(num_classes=4)
 
     def forward(self, x):
         x = self.model(x)
@@ -60,7 +62,7 @@ class LitModel(pl.LightningModule):
         x, y = batch
         #x = repeat(x, "bs dim -> bs cliplength dim",cliplength=4)
         #y = repeat(y, "bs-> bs cliplength",cliplength=4)
-        #x = rearrange(x, "bs bucketsize cliplength dim -> (bs bucketsize) cliplength dim")
+        #x = rearrange(x, "bs cliplength dim -> (bs cliplength) dim")
         #y = rearrange(y, "bs bucketsize cliplength-> (bs bucketsize) cliplength")
         y_predict = self(x)
         return x, y_predict, y
@@ -72,16 +74,19 @@ class LitModel(pl.LightningModule):
             prefix = ""
         y_p = rearrange(y_p, "bs time dim -> bs dim time")
         loss = self.loss(y_p, y)
+        #loss = self.=f1_loss(y_p, y)
         self.log(F"{prefix}loss", loss)
         return loss
 
     def training_step(self, batch, batch_idx):
         x, y_p, y = self.predict_batch(batch)
+        y_p = torch.softmax(y_p, dim=2)
         loss = self.cal_loss_and_log_info(y_p, y, val=False)
         return loss
 
     def validation_step(self, batch, batch_idx):
         x, y_p, y = self.predict_batch(batch)
+        y_p = torch.softmax(y_p, dim=2)
         _ = self.cal_loss_and_log_info(y_p, y, val=True)
 
         non_speech_label = self.cfg.data_cfg.NON_SPEECH_LABEL
@@ -153,7 +158,7 @@ class LitModel(pl.LightningModule):
 if __name__ == "__main__":
     cfg = Config()
     # n_gpus = 2
-    n_gpus = 1 #"5"
+    n_gpus = "2" #"5"
     # model = LitModel(lr=5e-4)
     # debug = True
     debug = False
@@ -170,7 +175,7 @@ if __name__ == "__main__":
     version = F"{description}_{cfg.train_cfg.lr}"
 
     checkpoint_callback = ModelCheckpoint(save_top_k=-1, mode="min", monitor="val_loss", verbose=True, save_last=True,
-                                           dirpath=F"saved_models/{version}_sgd",
+                                           dirpath=F"saved_models/{version}_softmax_cliplength100",
                                           filename="{epoch:04d}-{val_loss:.3f}-{f1:.3f}-{acc:.3f}-{precision:.3f}-{recall:.3f}")                                  
     lr_logger = LearningRateMonitor(logging_interval='epoch')
     if debug:

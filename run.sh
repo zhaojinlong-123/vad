@@ -1,1 +1,1 @@
-nohup python pl_solver_cnn_dfl.py > output_softmax_cliplength100.log 2>&1 &
+nohup python pl_solver_cnn_dfl_2.py > output_softmax_cliplength50_testdataset.log 2>&1 &

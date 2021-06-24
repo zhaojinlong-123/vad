@@ -7,7 +7,7 @@ class DataConfig:
         self.val_dataset_path = "competition_dataset/val"
         self.test_dataset_path = "competition_dataset/test"
         self.bs = 50000 #50000
-        self.clip_length = 100
+        self.clip_length = 50
         self.NON_SPEECH_LABEL = 3
 
 

@@ -12,5 +12,8 @@ saved_models
 # 数据集
 competition_dataset
 
+# log
+*.log
+
 # PyCharm
 .idea

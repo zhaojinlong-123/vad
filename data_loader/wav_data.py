@@ -10,7 +10,7 @@ import math
 
 
 class WavDataset(Dataset):
-    def __init__(self, dataset_path, bs, clip_length, val):
+    def __init__(self, dataset_path, bs, clip_length, val, load_test=True):
         super().__init__()
         self.dataset_path = dataset_path
         self.bs = bs  # batch_size
@@ -33,6 +33,20 @@ class WavDataset(Dataset):
             datafile_path = dataset_path + "/" + k + ".wav"
             data = load_data(datafile_path, clip_length)
             self.data_list.append(data[:, 0:labels_cnt])
+
+        if load_test and val==False:
+            test_labels_path = "/ssd/ssd_central3/zjl/project/VAD/baselineVAD/competition_dataset/test_labels.csv"
+            test_dataset_path = "/ssd/ssd_central3/zjl/project/VAD/baselineVAD/competition_dataset/test"
+            self.test_labels_dict = load_labels(test_labels_path, clip_length)
+
+            for k in self.test_labels_dict.keys():
+                l = self.test_labels_dict[k]
+                labels_cnt = l.__len__()
+                self.len += labels_cnt
+                self.labels_list.append(torch.Tensor(l))
+                datafile_path = test_dataset_path + "/" + k + ".wav"
+                data = load_data(datafile_path, clip_length)
+                self.data_list.append(data[:, 0:labels_cnt])
 
         self.labels = torch.cat(self.labels_list).long()
         self.data = torch.cat(self.data_list, dim=1)

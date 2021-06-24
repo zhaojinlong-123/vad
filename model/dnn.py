@@ -21,7 +21,7 @@ def init_weights(m):
 class DNN(nn.Module):
     def __init__(self, inputdim, outputdim, **kwargs):
         super(DNN, self).__init__()
-        hidden_size = 32
+        hidden_size = 128
         self.fc1 = nn.Linear(inputdim, hidden_size)
         self.bn1 = nn.BatchNorm1d(hidden_size)
         self.fc1_drop = nn.Dropout(p=0.2)
@@ -33,6 +33,26 @@ class DNN(nn.Module):
         self.fc3 = nn.Linear(hidden_size, hidden_size)
         self.bn3 = nn.BatchNorm1d(hidden_size)
         self.fc3_drop = nn.Dropout(p=0.2)
+
+        self.fc4 = nn.Linear(hidden_size, hidden_size)
+        self.bn4 = nn.BatchNorm1d(hidden_size)
+        self.fc4_drop = nn.Dropout(p=0.2)
+
+        self.fc5 = nn.Linear(hidden_size, hidden_size)
+        self.bn5 = nn.BatchNorm1d(hidden_size)
+        self.fc5_drop = nn.Dropout(p=0.2)
+
+        self.fc6 = nn.Linear(hidden_size, hidden_size)
+        self.bn6 = nn.BatchNorm1d(hidden_size)
+        self.fc6_drop = nn.Dropout(p=0.2)
+
+        self.fc7 = nn.Linear(hidden_size, hidden_size)
+        self.bn7 = nn.BatchNorm1d(hidden_size)
+        self.fc7_drop = nn.Dropout(p=0.2)
+
+        self.fc8 = nn.Linear(hidden_size, hidden_size)
+        self.bn8 = nn.BatchNorm1d(hidden_size)
+        self.fc8_drop = nn.Dropout(p=0.2)
         
         self.last = nn.Linear(hidden_size, outputdim)
 

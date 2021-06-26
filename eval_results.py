@@ -4,12 +4,12 @@ from sklearn.metrics import f1_score
 
 if __name__ == "__main__":
     # Ground truth speech label
-    gt = pd.read_csv("competition_dataset/val_labels.csv").sort_values(["id", "s"])
+    gt = pd.read_csv("competition_dataset/test_labels.csv").sort_values(["id", "s"])
     uids = list(set(gt["id"]))
     # Remove the No-Speech labels, and only keep the Speech labels
     gt = gt[gt["label_index"] != 3]
     # Prediction
-    pre = pd.read_csv("val_pre.csv").sort_values(["id", "s"])
+    pre = pd.read_csv("test_pre_6.csv").sort_values(["id", "s"])
 
     # For different shifting window, we get different frames in each second.
     # We will use the max F1 for the final result

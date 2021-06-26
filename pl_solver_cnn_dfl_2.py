@@ -1,9 +1,10 @@
 #from model.RES_RCNN2 import CRNN
 from model.models import CRNN
-#from model.dnn import DNN
+#from model.BLSTMRNN import BLSTMRNN
+#from model.boosted_dnn import BoostedDNN
 import torch
 import pytorch_lightning as pl
-from data_loader.wav_data import WavDataset
+from data_loader.wav_data_old import WavDataset
 from config import Config
 from torch.utils.data import DataLoader
 from einops import rearrange, repeat
@@ -30,6 +31,7 @@ class LitModel(pl.LightningModule):
         self.loss = torch.nn.CrossEntropyLoss()
         #self.loss = 
         self.model = CRNN(64, 4)
+        #self.model = BoostedDNN(64*5000,5000)
         self.f1 = pl.metrics.F1(num_classes=2)
         self.acc = pl.metrics.Accuracy()
         self.pre = pl.metrics.Precision()
@@ -61,8 +63,9 @@ class LitModel(pl.LightningModule):
         #x = batch['features']
         #y = batch['labels']
         x, y = batch
-        #x = repeat(x, "bs dim -> bs cliplength dim",cliplength=4)
-        #y = repeat(y, "bs-> bs cliplength",cliplength=4)
+        
+        #x = rearrange(x, "1 bs cliplength dim -> (1 bs) cliplength dim")
+        #y = rearrange(y, "1 bs cliplength dim-> (1 bs) (cliplength dim)")
         #x = rearrange(x, "bs cliplength dim -> (bs cliplength) dim")
         #y = rearrange(y, "bs bucketsize cliplength-> (bs bucketsize) cliplength")
         y_predict = self(x)
@@ -87,25 +90,28 @@ class LitModel(pl.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         x, y_p, y = self.predict_batch(batch)
+        #y_p = torch.softmax(y_p, dim=2)
         _ = self.cal_loss_and_log_info(y_p, y, val=True)
 
         non_speech_label = self.cfg.data_cfg.NON_SPEECH_LABEL
         y_b = (~(y == non_speech_label)).long()
-        y_b = rearrange(y_b, "bs time-> (bs time)")
+        #y_b = rearrange(y_b, "bs time-> (bs time)")
         y_p = torch.softmax(y_p, dim=2)
 
         predict_result = torch.argmax(y_p, dim=2)
         y_pb = (predict_result != 3).int()
-        y_pb = torch.squeeze(y_pb, dim=0)
-        '''
-        prob_non_speech = y_p[:, :, non_speech_label]#+0.115
-        prob_speech = 1 - prob_non_speech
-        y_pb = torch.stack([prob_non_speech, prob_speech], dim=2)
-        y_pb = rearrange(y_pb, "bs time dim -> (bs time) dim")
-'''
-        print("pre:", y_pb)
-        print("truth:", y_b)
+        #y_pb = torch.squeeze(y_pb, dim=0)
+        
+        #prob_non_speech = y_p[:, :, non_speech_label]#+0.115
+        #prob_speech = 1 - prob_non_speech
+        #y_pb = torch.stack([prob_non_speech, prob_speech], dim=2)
+        #y_pb = rearrange(y_pb, "bs time dim -> (bs time) dim")
+
+        #print("pre:", y_pb)
+        #print("truth:", y_b)
         # self.val_metrics(y_pb, y_b)
+        y_pb = rearrange(y_pb, "bs time-> (bs time)")
+        y_b = rearrange(y_b, "bs time-> (bs time)")
         self.f1(y_pb, y_b)
         self.acc(y_pb, y_b)
         self.pre(y_pb, y_b)
@@ -124,9 +130,9 @@ class LitModel(pl.LightningModule):
                                    clip_length=self.cfg.data_cfg.clip_length,
                                    val=False)
         if self.cfg.train_cfg.debug:
-            train_loader = DataLoader(train_dataset, shuffle=True, batch_size=1)
+            train_loader = DataLoader(train_dataset, shuffle=True, batch_size=5)
         else:
-            train_loader = DataLoader(train_dataset, shuffle=True, batch_size=1, num_workers=32)
+            train_loader = DataLoader(train_dataset, shuffle=True, batch_size=5, num_workers=32)
             # train_loader = DataLoader(train_dataset, shuffle=True, batch_size=1, num_workers=56)
         return train_loader
 
@@ -136,9 +142,9 @@ class LitModel(pl.LightningModule):
                                  clip_length=self.cfg.data_cfg.clip_length,
                                  val=True)
         if self.cfg.train_cfg.debug:
-            val_loader = DataLoader(val_dataset, shuffle=False, batch_size=1, drop_last=False)
+            val_loader = DataLoader(val_dataset, shuffle=False, batch_size=5, drop_last=False)
         else:
-            val_loader = DataLoader(val_dataset, shuffle=False, batch_size=1, drop_last=False, num_workers=32)
+            val_loader = DataLoader(val_dataset, shuffle=False, batch_size=5, drop_last=False, num_workers=32)
             # val_loader = DataLoader(val_dataset, shuffle=False, batch_size=1, drop_last=False, num_workers=56)
         return val_loader
 
@@ -148,9 +154,9 @@ class LitModel(pl.LightningModule):
                                  clip_length=self.cfg.data_cfg.clip_length,
                                  val=True)
         if self.cfg.train_cfg.debug:
-            val_loader = DataLoader(val_dataset, shuffle=False, batch_size=1, drop_last=False)
+            val_loader = DataLoader(val_dataset, shuffle=False, batch_size=5, drop_last=False)
         else:
-            val_loader = DataLoader(val_dataset, shuffle=False, batch_size=1, drop_last=False, num_workers=32)
+            val_loader = DataLoader(val_dataset, shuffle=False, batch_size=5, drop_last=False, num_workers=32)
             # val_loader = DataLoader(val_dataset, shuffle=False, batch_size=1, drop_last=False, num_workers=56)
         return val_loader
 
@@ -159,7 +165,7 @@ if __name__ == "__main__":
     cfg = Config()
     # n_gpus = 2
     n_gpus = "0" #"5"
-    os.environ['CUDA_VISIBLE_DEVICES']='4'
+    os.environ['CUDA_VISIBLE_DEVICES']='5'
     CUDA:0
     # model = LitModel(lr=5e-4)
     # debug = True
@@ -176,8 +182,8 @@ if __name__ == "__main__":
         model = model.load_from_checkpoint(checkpoint, cfg=cfg, strict=False)
     version = F"{description}_{cfg.train_cfg.lr}"
 
-    checkpoint_callback = ModelCheckpoint(save_top_k=-1, mode="min", monitor="val_loss", verbose=True, save_last=True,
-                                           dirpath=F"saved_models/{version}_softmax_cliplength50_testdataset",
+    checkpoint_callback = ModelCheckpoint(save_top_k=-1, mode="min", monitor="val_loss", verbose=True, save_last=False,
+                                           dirpath=F"saved_models/{version}_softmax_cliplength50_CRNN_L4T_dropout_B5",
                                           filename="{epoch:04d}-{val_loss:.3f}-{f1:.3f}-{acc:.3f}-{precision:.3f}-{recall:.3f}")                                  
     lr_logger = LearningRateMonitor(logging_interval='epoch')
     if debug:

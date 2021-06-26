@@ -10,10 +10,11 @@ import math
 
 
 class WavDataset(Dataset):
-    def __init__(self, dataset_path, bs, clip_length, val, load_test=True):
+    def __init__(self, dataset_path, bs, clip_length, val, window_size=100):
         super().__init__()
         self.dataset_path = dataset_path
         self.bs = bs  # batch_size
+        self.window_size = window_size
         self.clip_length = clip_length  # 单位：毫秒
         self.val = val
 
@@ -34,31 +35,26 @@ class WavDataset(Dataset):
             data = load_data(datafile_path, clip_length)
             self.data_list.append(data[:, 0:labels_cnt])
 
-        if load_test and val==False:
-            test_labels_path = "/ssd/ssd_central3/zjl/project/VAD/baselineVAD/competition_dataset/test_labels.csv"
-            test_dataset_path = "/ssd/ssd_central3/zjl/project/VAD/baselineVAD/competition_dataset/test"
-            self.test_labels_dict = load_labels(test_labels_path, clip_length)
-
-            for k in self.test_labels_dict.keys():
-                l = self.test_labels_dict[k]
-                labels_cnt = l.__len__()
-                self.len += labels_cnt
-                self.labels_list.append(torch.Tensor(l))
-                datafile_path = test_dataset_path + "/" + k + ".wav"
-                data = load_data(datafile_path, clip_length)
-                self.data_list.append(data[:, 0:labels_cnt])
-
         self.labels = torch.cat(self.labels_list).long()
         self.data = torch.cat(self.data_list, dim=1)
 
     def __len__(self):
-        return int(math.ceil(self.len / self.bs))
+        return int(self.len // (self.bs * self.window_size))
 
     def __getitem__(self, index):
-        start = index * self.bs
-        end = min((index + 1) * self.bs, self.len)
+        start = index * (self.bs * self.window_size)
 
-        return self.data[:, start:end].T, self.labels[start:end]
+        data_batch = []
+        labels_batch = []
+
+        for i in range(self.bs):
+            data_batch.append(self.data[:, start:start + self.window_size].T)
+            labels_batch.append(self.labels[start:start + self.window_size])
+            start += self.window_size
+
+        data = torch.cat(data_batch, dim=1).reshape(self.bs, self.window_size, -1)
+        label = torch.cat(labels_batch).reshape(self.bs, self.window_size, 1)
+        return data, label
 
 
 def load_labels(labels_path, clip_length):
@@ -124,7 +120,7 @@ def load_data(data_path, clip_length, feature_type="MFCC"):
 
 
 if __name__ == "__main__":
-    dataset = WavDataset("../competition_dataset/train", 2, 10, False)
+    dataset = WavDataset("../competition_dataset/train", 512, 100, False)
     dataset_len = dataset.__len__()
     print("dataset size:", dataset_len)
 

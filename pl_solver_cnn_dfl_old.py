@@ -1,8 +1,10 @@
+#from model.RES_RCNN2 import CRNN
 from model.models import CRNN
+#from model.BLSTM import BLSTM
 #from model.dnn import DNN
 import torch
 import pytorch_lightning as pl
-from data_loader.wav_data import WavDataset
+from data_loader.wav_data_old import WavDataset
 from config import Config
 from torch.utils.data import DataLoader
 from einops import rearrange, repeat
@@ -27,7 +29,7 @@ class LitModel(pl.LightningModule):
         self.lr = cfg.train_cfg.lr
         self.save_hyperparameters()
         self.loss = torch.nn.CrossEntropyLoss()
-        #self.loss = 
+        #self.loss =
         self.model = CRNN(64, 4)
         self.f1 = pl.metrics.F1(num_classes=2)
         self.acc = pl.metrics.Accuracy()
@@ -42,7 +44,7 @@ class LitModel(pl.LightningModule):
 
     def configure_optimizers(self):
         opt = torch.optim.AdamW(self.model.parameters(), lr=self.lr, betas=(0.9, 0.999))
-        #opt = torch.optim.SGD(self.model.parameters(), lr=self.lr, momentum = 0.9)
+        #opt = torch.optim.SGD(self.model.parameters(), lr=0.045, momentum = 0.9, weight_decay=0.00004)
         monitor = 'val_loss'
         scheduler = ReduceLROnPlateau(opt, "min", factor=0.8, min_lr=self.lr/10, patience=10)
         schedulers = [
@@ -86,7 +88,6 @@ class LitModel(pl.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         x, y_p, y = self.predict_batch(batch)
-        y_p = torch.softmax(y_p, dim=2)
         _ = self.cal_loss_and_log_info(y_p, y, val=True)
 
         non_speech_label = self.cfg.data_cfg.NON_SPEECH_LABEL
@@ -158,7 +159,9 @@ class LitModel(pl.LightningModule):
 if __name__ == "__main__":
     cfg = Config()
     # n_gpus = 2
-    n_gpus = "2" #"5"
+    n_gpus = "0" #"5"
+    os.environ['CUDA_VISIBLE_DEVICES']='0'
+    CUDA:0
     # model = LitModel(lr=5e-4)
     # debug = True
     debug = False
@@ -175,8 +178,8 @@ if __name__ == "__main__":
     version = F"{description}_{cfg.train_cfg.lr}"
 
     checkpoint_callback = ModelCheckpoint(save_top_k=-1, mode="min", monitor="val_loss", verbose=True, save_last=True,
-                                           dirpath=F"saved_models/{version}_softmax_cliplength100",
-                                          filename="{epoch:04d}-{val_loss:.3f}-{f1:.3f}-{acc:.3f}-{precision:.3f}-{recall:.3f}")                                  
+                                           dirpath=F"saved_models/{version}_softmax_cliplength50_LSTM",
+                                          filename="{epoch:04d}-{val_loss:.3f}-{f1:.3f}-{acc:.3f}-{precision:.3f}-{recall:.3f}")
     lr_logger = LearningRateMonitor(logging_interval='epoch')
     if debug:
         trainer = pl.Trainer(gpus=1,

@@ -1,8 +1,9 @@
 import numpy as np
 
-from data_loader import wav_data
-import model.models
-from test import LitModel
+from data_loader import wav_data_old
+#import model.models
+#import model.BLSTMRNN
+from pl_solver_cnn_dfl_2 import LitModel
 import torchaudio
 from config import Config
 from config import DataConfig
@@ -59,16 +60,22 @@ if __name__ == "__main__":
     file_list = os.listdir(dataset_path)
     clip_length = dataconfig.clip_length
 
-    is_two_classes = False  # 是否为二分类
+    is_two_classes = True  # 是否为二分类
 
     cfg = Config()
-    checkpoint = "saved_models/original_0.0005_softmax_cliplength50/epoch=0070-val_loss=1.233-f1=0.915-acc=0.915-precision=0.915-recall=0.915.ckpt"
+    checkpoint = "saved_models/original_0.0005_softmax_cliplength50_BLSTMRNN_L4T_B5/epoch=0101-val_loss=0.984-f1=0.906-acc=0.906-precision=0.906-recall=0.906.ckpt"
+    
+    #checkpoint = "saved_models/original_0.0005_softmax_cliplength50_BLSTMRNN_L4_B5/epoch=0096-val_loss=0.954-f1=0.921-acc=0.921-precision=0.921-recall=0.921.ckpt"
+    #checkpoint = "saved_models/original_0.0005_softmax_cliplength50_BLSTMRNN_B5/epoch=0044-val_loss=0.939-f1=0.917-acc=0.917-precision=0.917-recall=0.917.ckpt"
+    #checkpoint = "saved_models/original_0.0005_softmax_cliplength50_testdataset/epoch=0186-val_loss=0.941-f1=0.917-acc=0.917-precision=0.917-recall=0.917.ckpt"
+    #checkpoint = "saved_models/original_0.0005_softmax_cliplength50_CRNN_B5/epoch=0047-val_loss=0.949-f1=0.917-acc=0.917-precision=0.917-recall=0.917.ckpt"
+    #checkpoint = "saved_models/original_0.0005_softmax_cliplength50/epoch=0070-val_loss=1.233-f1=0.915-acc=0.915-precision=0.915-recall=0.915.ckpt"
     #checkpoint = "model_mfcc/epoch=0061-val_loss=0.942-f1=0.912-acc=0.912-precision=0.912-recall=0.912.ckpt"
     model = LitModel(cfg)
     model = model.load_from_checkpoint(checkpoint, cfg=cfg, strict=False)
     model.train(False)
 
-    output_file_name = "test_pre_4.csv"
+    output_file_name = "test_pre_6.csv"
 
     i = 1
     labels_list = []
@@ -79,7 +86,7 @@ if __name__ == "__main__":
             uid = f.replace(".wav", "")
 
             data_path = dataset_path + "/" + f
-            data = wav_data.load_data(data_path, clip_length)
+            data = wav_data_old.load_data(data_path, clip_length)
             data = data.T
             data = data.unsqueeze(0)
             #print(data.shape)
@@ -106,7 +113,7 @@ if __name__ == "__main__":
             uid = f.replace(".wav", "")
 
             data_path = dataset_path + "/" + f
-            data = wav_data.load_data(data_path, clip_length)
+            data = wav_data_old.load_data(data_path, clip_length)
             data = data.T
             data = data.unsqueeze(0)
 

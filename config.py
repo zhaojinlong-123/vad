@@ -4,9 +4,9 @@ import os
 class DataConfig:
     def __init__(self):
         self.train_dataset_path = "competition_dataset/train"
-        self.val_dataset_path = "competition_dataset/val"
+        self.val_dataset_path = "competition_dataset/test"
         self.test_dataset_path = "competition_dataset/test"
-        self.bs = 50000 #50000
+        self.bs = 10000#50000
         self.clip_length = 50
         self.NON_SPEECH_LABEL = 3
 

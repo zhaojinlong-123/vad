@@ -35,7 +35,7 @@ class Block2D(nn.Module):
         return self.block(x)
 
 
-class CRNN(nn.Module):
+class BLSTMRNN(nn.Module):
     def __init__(self, inputdim, outputdim, **kwargs):
         super().__init__()
         features = nn.ModuleList()
@@ -55,13 +55,8 @@ class CRNN(nn.Module):
                                                       inputdim)).shape
             rnn_input_dim = rnn_input_dim[1] * rnn_input_dim[-1]
 
-        self.gru = nn.GRU(rnn_input_dim,
-                          128,
-                          4,
-                          dropout =0.1,
-                          bidirectional=True,
-                          batch_first=True)
-        self.outputlayer = nn.Linear(256, outputdim)
+        self.blstm = nn.LSTM(rnn_input_dim, 256, 4, batch_first=True, bidirectional=True)
+        self.outputlayer = nn.Linear(512, outputdim)
         self.features.apply(init_weights)
         self.outputlayer.apply(init_weights)
 
@@ -70,7 +65,7 @@ class CRNN(nn.Module):
         x = x.unsqueeze(1)
         x = self.features(x)
         x = x.transpose(1, 2).contiguous().flatten(-2)
-        x, _ = self.gru(x)
+        x, _ = self.blstm(x)
         decision_time = torch.sigmoid(self.outputlayer(x)).clamp(1e-7, 1.)
         decision_time = torch.nn.functional.interpolate(
             decision_time.transpose(1, 2),
@@ -81,9 +76,9 @@ class CRNN(nn.Module):
 
 
 if __name__ == "__main__":
-    model = CRNN(64, 4)
+    model = BLSTMRNN(64, 4)
     #x = torch.rand(4, 100, 64)
-    x = torch.rand(1,10,64)
+    x = torch.rand(5,10000,64)
     o = model(x)
     # (bs, time, output_dim)
     print(o.shape)

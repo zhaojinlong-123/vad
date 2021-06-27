@@ -6,9 +6,10 @@ class DataConfig:
         self.train_dataset_path = "competition_dataset/train"
         self.val_dataset_path = "competition_dataset/test"
         self.test_dataset_path = "competition_dataset/test"
-        self.bs = 10000#50000
-        self.clip_length = 50
+        self.bs = 50000#50000
+        self.clip_length = 100
         self.NON_SPEECH_LABEL = 3
+        self.window_shift = 50
 
 
 class TrainConfig:

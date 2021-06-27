@@ -58,7 +58,6 @@ class CRNN(nn.Module):
         self.gru = nn.GRU(rnn_input_dim,
                           128,
                           4,
-                          dropout =0.1,
                           bidirectional=True,
                           batch_first=True)
         self.outputlayer = nn.Linear(256, outputdim)

@@ -10,32 +10,33 @@ import math
 
 
 class WavDataset(Dataset):
-    def __init__(self, dataset_path, bs, clip_length, val, load_test=True):
+    def __init__(self, dataset_path, bs, clip_length, window_shift, val, load_test=True):
         super().__init__()
         self.dataset_path = dataset_path
         self.bs = bs  # batch_size
         self.clip_length = clip_length  # 单位：毫秒
         self.val = val
+        self.window_shift = window_shift
 
         # 加载 CSV 标签文件
         labels_path = dataset_path + "_labels.csv"
-        self.labels_dict = load_labels(labels_path, clip_length)
+        labels_dict = load_labels(labels_path, window_shift)
 
         self.len = 0
-        self.labels_list = []
-        self.data_list = []
+        labels_list = []
+        data_list = []
 
-        for k in self.labels_dict.keys():
-            l = self.labels_dict[k]
+        for k in labels_dict.keys():
+            l = labels_dict[k]
             labels_cnt = l.__len__()
             self.len += labels_cnt
-            self.labels_list.append(torch.Tensor(l))
+            labels_list.append(torch.Tensor(l))
             datafile_path = dataset_path + "/" + k + ".wav"
-            data = load_data(datafile_path, clip_length)
-            self.data_list.append(data[:, 0:labels_cnt])
+            data = load_data(datafile_path, clip_length, window_shift)
+            data_list.append(data[:, 0:labels_cnt])
 
-        self.labels = torch.cat(self.labels_list).long()
-        self.data = torch.cat(self.data_list, dim=1)
+        self.labels = torch.cat(labels_list).long()
+        self.data = torch.cat(data_list, dim=1)
 
     def __len__(self):
         return int(self.len // self.bs)
@@ -75,7 +76,7 @@ def load_labels(labels_path, clip_length):
     return labels
 
 
-def load_data(data_path, clip_length, feature_type="MFCC"):
+def load_data(data_path, clip_length, window_shift, feature_type="MFCC"):
     """
     加载一个 wav 文件的数据。
     参数：
@@ -88,6 +89,7 @@ def load_data(data_path, clip_length, feature_type="MFCC"):
     waveform, sample_rate = torchaudio.load(data_path)
 
     clip_size = int(clip_length * sample_rate / 1000)
+    hop_length = int(window_shift * sample_rate / 1000)
 
     # 归一化
     mean = waveform.mean()
@@ -99,7 +101,7 @@ def load_data(data_path, clip_length, feature_type="MFCC"):
     if feature_type == "MFCC":
         melkwargs = {
             "n_fft": clip_size,
-            "hop_length": clip_size,
+            "hop_length": hop_length,
             "n_mels": 64
         }
         mfcc = torchaudio.transforms.MFCC(sample_rate=sample_rate, n_mfcc=64, melkwargs=melkwargs)
@@ -110,7 +112,7 @@ def load_data(data_path, clip_length, feature_type="MFCC"):
 
 
 if __name__ == "__main__":
-    dataset = WavDataset("../competition_dataset/val", 2, 10, False)
+    dataset = WavDataset("../competition_dataset/val", 2, 10, window_shift=5, val=False)
     dataset_len = dataset.__len__()
     print("dataset size:", dataset_len)
 

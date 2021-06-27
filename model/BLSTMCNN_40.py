@@ -44,10 +44,10 @@ class BLSTMRNN(nn.Module):
             nn.LPPool2d(4, (2, 4)),
             Block2D(32, 128),
             Block2D(128, 128),
-            nn.LPPool2d(4, (2, 4)),
+            nn.LPPool2d(4, (2, 2)),
             Block2D(128, 128),
             Block2D(128, 128),
-            nn.LPPool2d(4, (1, 4)),
+            nn.LPPool2d(4, (1, 2)),
             nn.Dropout(0.3),
         )
         with torch.no_grad():
@@ -55,8 +55,8 @@ class BLSTMRNN(nn.Module):
                                                       inputdim)).shape
             rnn_input_dim = rnn_input_dim[1] * rnn_input_dim[-1]
 
-        self.blstm = nn.LSTM(rnn_input_dim, 128, 4, batch_first=True, bidirectional=True)
-        self.outputlayer = nn.Linear(256, outputdim)
+        self.blstm = nn.LSTM(256, 256, 4, batch_first=True, bidirectional=True)
+        self.outputlayer = nn.Linear(512, outputdim)
         self.features.apply(init_weights)
         self.outputlayer.apply(init_weights)
 
@@ -76,7 +76,7 @@ class BLSTMRNN(nn.Module):
 
 
 if __name__ == "__main__":
-    model = BLSTMRNN(64, 4)
+    model = BLSTMRNN(40, 4)
     #x = torch.rand(4, 100, 64)
     x = torch.rand(5,10000,64)
     o = model(x)

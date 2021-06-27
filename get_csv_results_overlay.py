@@ -1,6 +1,6 @@
 import numpy as np
 
-from data_loader import wav_data_old
+from data_loader import wav_data_overlay
 #import model.models
 #import model.BLSTMRNN
 from pl_solver_cnn_dfl_2 import LitModel

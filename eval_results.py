@@ -9,7 +9,7 @@ if __name__ == "__main__":
     # Remove the No-Speech labels, and only keep the Speech labels
     gt = gt[gt["label_index"] != 3]
     # Prediction
-    pre = pd.read_csv("test_pre_6.csv").sort_values(["id", "s"])
+    pre = pd.read_csv("test_pre_7.csv").sort_values(["id", "s"])
 
     # For different shifting window, we get different frames in each second.
     # We will use the max F1 for the final result
